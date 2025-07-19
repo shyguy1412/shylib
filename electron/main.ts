@@ -1,4 +1,4 @@
-import { ipcMain, app, BrowserWindow } from "electron";
+import { ipcMain, app, BrowserWindow, session } from "electron";
 
 ipcMain.handle("close", () => {
   app.quit();
@@ -29,4 +29,17 @@ ipcMain.handle("minimize", () => {
 app.on("browser-window-created", (_, window) => {
   window.on('enter-full-screen', () => window.webContents.send('enter-full-screen'));
   window.on('leave-full-screen', () => window.webContents.send('leave-full-screen'));
+});
+
+app.whenReady().then(() => {
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        "Content-Security-Policy": [
+          `default-src 'self' ${process.env.DEV ? "'unsafe-inline'" : ""}`,
+        ],
+      },
+    });
+  });
 });
