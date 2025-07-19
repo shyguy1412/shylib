@@ -2,8 +2,10 @@ import { h } from "preact";
 import style from "./Titlebar.module.css";
 import { IconType } from "react-icons";
 import { FaRegSquare, FaWindowMinimize, FaX } from "react-icons/fa6";
-import { memo } from "preact/compat";
+import { memo, useEffect, useState } from "preact/compat";
 import { Lumber } from "@/lib/log/Lumber";
+import { createAtom } from "@xstate/store";
+import { useAtom } from "@/lib/hooks";
 
 type Props = {
   title: string;
@@ -13,12 +15,21 @@ type Props = {
   close: () => void;
 };
 
+const isFullscreenAtom = createAtom(await fullscreen.isFullscreen());
+
+fullscreen.onEnterFullscreen(() => isFullscreenAtom.set(true));
+fullscreen.onLeaveFullscreen(() => isFullscreenAtom.set(false));
+
 /**
  * Titlebar. Shows app icon and window controls. Can be used to drag window
  */
 export const Titlebar = memo(
   ({ title, icon, minimize, maximize, close }: Props) => {
     Lumber.log(Lumber.RENDER, "TITLEBAR RENDER");
+
+    const [isFullscreen] = useAtom(isFullscreenAtom);
+
+    if (isFullscreen) return undefined;
 
     return (
       <div class={style.titlebar} style-titlebar="">
