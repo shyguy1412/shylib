@@ -1,0 +1,66 @@
+.titlebar {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  width: 100%;
+  height: 2.3em;
+
+  user-select: none;
+
+  z-index: 9999;
+  /*Make window draggable*/
+  -webkit-app-region: drag;
+}
+
+/* inherit BG so the brighten filter can apply */
+.titlebar, .titlebar div {
+  background-color: inherit;
+}
+
+.titlebar > div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+/* Icon */
+.titlebar > div:first-child {
+  width: 2.3em;
+  font-size: 1.3em;
+}
+
+/* Title */
+.titlebar > div:nth-child(2) {
+  font-weight: 400;
+  font-size: 1.1em;
+}
+
+/* Control buttons */
+.titlebar > div:last-child {
+  justify-content: end;
+}
+
+.titlebar > div:last-child > div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  font-size: 0.75em;
+  aspect-ratio: 1/1;
+  /* Make buttons still work  */
+  -webkit-app-region: no-drag;
+}
+
+.titlebar > div:last-child > div:hover:not(:last-child) {
+  filter: brightness(160%);
+}
+
+@media (prefers-color-scheme: light) {
+  .titlebar > div:last-child > div:hover:not(:last-child) {
+    filter: brightness(80%);
+  }
+}
+
+.titlebar > div:last-child > div:last-child:hover {
+  background-color: crimson;
+}
