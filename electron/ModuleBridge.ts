@@ -57,7 +57,7 @@ function bridgeMain<T extends Record<string, unknown>>(module: T, namespace: str
     });
   }
 
-  ipcMain.handleOnce(`__module_bridge_get_api_methods_${namespace}`, () => methods);
+  ipcMain.handle(`__module_bridge_get_api_methods_${namespace}`, () => methods);
 }
 
 let serialized_value_id = 1;
@@ -68,7 +68,7 @@ function serialize(arg: any) {
     name: `__module_bridge_serialized_${serialized_value_id++}`
   };
 
-  ipcRenderer.on(callback_token.name, (...args) => arg(...args));
+  ipcRenderer.on(callback_token.name, (e, ...args) => arg(...args));
 
   return callback_token;
 }
