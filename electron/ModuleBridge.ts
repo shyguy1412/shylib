@@ -37,20 +37,9 @@ export function bridge<T extends Record<string, unknown>>(moduleOrNamespace: T |
 
 async function bridgeRender(namespace: string) {
   const methods: string[] = await ipcRenderer.invoke(`__module_bridge_get_api_methods_${namespace}`);
-  let id = 1;
   contextBridge.exposeInMainWorld(namespace, methods.reduce((prev, cur) => {
     prev[cur] = (...args: any[]) => {
-      ipcRenderer.invoke(`__module_bridge_${namespace}_${cur}`, ...args.map((arg) => {
-        if (typeof arg != "function") return arg;
-        const callback_token = {
-          __module_bridge_tag: "function",
-          name: `__module_bridge_${namespace}_${cur}_callback_${id++}`
-        };
-
-        ipcRenderer.on(callback_token.name, (...args) => arg(...args));
-
-        return callback_token;
-      }));
+      ipcRenderer.invoke(`__module_bridge_${namespace}_${cur}`, ...args.map(serialize));
     };
     return prev;
   }, {} as Record<string, Function>));
@@ -64,20 +53,35 @@ function bridgeMain<T extends Record<string, unknown>>(module: T, namespace: str
     if (typeof value != "function") continue;
     methods.push(key);
     ipcMain.handle(`__module_bridge_${namespace}_${key}`, (_, ...args) => {
-      return value(...args.map((arg) => {
-        if (!("__module_bridge_tag" in arg)) return arg;
-
-        switch (arg["__module_bridge_tag"]) {
-          case "function": return (...args: any[]) => {
-            for (const window of BrowserWindow.getAllWindows()) {
-              window.webContents.send(arg.name, ...args);
-            }
-          };
-          default: throw new Error("Invalid token tag");
-        }
-      }));
+      return value(...args.map(deserialize));
     });
   }
 
   ipcMain.handleOnce(`__module_bridge_get_api_methods_${namespace}`, () => methods);
+}
+
+let serialized_value_id = 1;
+function serialize(arg: any) {
+  if (typeof arg != "function") return arg;
+  const callback_token = {
+    __module_bridge_tag: "function",
+    name: `__module_bridge_serialized_${serialized_value_id++}`
+  };
+
+  ipcRenderer.on(callback_token.name, (...args) => arg(...args));
+
+  return callback_token;
+}
+
+function deserialize(arg: any) {
+  if (!("__module_bridge_tag" in arg)) return arg;
+
+  switch (arg["__module_bridge_tag"]) {
+    case "function": return (...args: any[]) => {
+      for (const window of BrowserWindow.getAllWindows()) {
+        window.webContents.send(arg.name, ...args);
+      }
+    };
+    default: throw new Error("Invalid token tag");
+  }
 }
