@@ -74,7 +74,7 @@ function serialize(arg: any) {
 }
 
 function deserialize(arg: any) {
-  if (!("__module_bridge_tag" in arg)) return arg;
+  if (typeof arg != "object" || !("__module_bridge_tag" in arg)) return arg;
 
   switch (arg["__module_bridge_tag"]) {
     case "function": return (...args: any[]) => {
@@ -82,6 +82,6 @@ function deserialize(arg: any) {
         window.webContents.send(arg.name, ...args);
       }
     };
-    default: throw new Error("Invalid token tag");
+    default: throw new Error("Invalid token tag " + arg["__module_bridge_tag"]);
   }
 }
