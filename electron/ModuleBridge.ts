@@ -74,7 +74,7 @@ function serialize(arg: any) {
 }
 
 function deserialize(arg: any) {
-  if (typeof arg != "object" || !("__module_bridge_tag" in arg)) return arg;
+  if (!arg || typeof arg != "object" || !("__module_bridge_tag" in arg)) return arg;
 
   switch (arg["__module_bridge_tag"]) {
     case "function": return (...args: any[]) => {
