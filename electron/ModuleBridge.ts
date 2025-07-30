@@ -4,9 +4,9 @@ import { BrowserWindow, contextBridge, ipcMain, ipcRenderer } from "electron";
  * Needs to be called both in render and in main
  * @param module Module to bridge
  */
-export function bridge<T extends Record<string, unknown>>(namespace: string): void;
+export function bridge<T extends Record<string, unknown>>(): void;
 export function bridge<T extends Record<string, unknown>>(module: T, namespace: string): void;
-export function bridge<T extends Record<string, unknown>>(moduleOrNamespace: T | string, namespace?: string) {
+export function bridge<T extends Record<string, unknown>>(moduleOrNamespace?: T, namespace?: string) {
 
   if (ipcMain) {
     const module = moduleOrNamespace;
@@ -22,13 +22,8 @@ export function bridge<T extends Record<string, unknown>>(moduleOrNamespace: T |
   }
 
   if (ipcRenderer) {
-    const namespace = moduleOrNamespace;
-
-    if (typeof namespace != "string") {
-      throw new TypeError("Expected 'namespace' to be a string, got " + typeof namespace);
-    }
-
-    bridgeRender(namespace);
+    ipcRenderer.invoke('__module_bridge_get_namespaces')
+      .then(namespaces => namespaces.map(bridgeRender));
     return;
   }
 
@@ -45,8 +40,12 @@ async function bridgeRender(namespace: string) {
   }, {} as Record<string, Function>));
 }
 
+const namespaces = new Set<string>();
+
 function bridgeMain<T extends Record<string, unknown>>(module: T, namespace: string) {
   const methods: string[] = [];
+
+  namespaces.add(namespace);
 
   for (const key in module) {
     const value = module[key];
@@ -59,6 +58,11 @@ function bridgeMain<T extends Record<string, unknown>>(module: T, namespace: str
 
   ipcMain.handle(`__module_bridge_get_api_methods_${namespace}`, () => methods);
 }
+
+(async () => {
+  if (!ipcMain) return;
+  ipcMain.handle(`__module_bridge_get_namespaces`, () => namespaces[Symbol.iterator]().toArray());
+})().catch();
 
 let serialized_value_id = 1;
 function serialize(arg: any) {
