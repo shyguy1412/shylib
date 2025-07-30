@@ -34,7 +34,7 @@ async function bridgeRender(namespace: string) {
   const methods: string[] = await ipcRenderer.invoke(`__module_bridge_get_api_methods_${namespace}`);
   contextBridge.exposeInMainWorld(namespace, methods.reduce((prev, cur) => {
     prev[cur] = (...args: any[]) => {
-      ipcRenderer.invoke(`__module_bridge_${namespace}_${cur}`, ...args.map(serialize));
+      return ipcRenderer.invoke(`__module_bridge_${namespace}_${cur}`, ...args.map(serialize));
     };
     return prev;
   }, {} as Record<string, Function>));
