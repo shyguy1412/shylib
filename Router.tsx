@@ -33,6 +33,10 @@ export function createRouter<R extends RouteTable>(
         route: route.slice(0, route.indexOf(event.route) + 1),
         view: routeTable[event.route] ?? None,
       }),
+      popBreadcrumb: ({ route }) => ({
+        route: route.slice(0, -1),
+        view: routeTable[route.at(-2)!] ?? None,
+      }),
     },
   });
 
@@ -50,7 +54,10 @@ export function useRouter<R extends string>(router: Router<R>) {
     followBreadcrumb: useCallback((route: R) => router.trigger.followBreadcrumb({ route }), [
       router,
     ]),
-    route: useSelector(router, (state) => state.context.route[0]),
+    popBreadcrumb: useCallback(() => router.trigger.popBreadcrumb(), [
+      router,
+    ]),
+    route: useSelector(router, (state) => state.context.route.at(-1)!),
     breadcrumbs: useSelector(router, (state) => state.context.route),
     View: useSelector(router, (state) => state.context.view),
   };
