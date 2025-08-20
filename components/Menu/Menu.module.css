@@ -1,0 +1,63 @@
+.breadcrumbs span:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.menu {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.menu h1 {
+  font-weight: 300;
+  font-size: 5em;
+  position: relative;
+}
+
+.menu [style-entry] {
+  background-color: transparent;
+  color: inherit;
+
+  font-size: 1.5em;
+
+  border: 3px solid var(--clr-primary-a0);
+  border-radius: 0.3em;
+
+  width: 10em;
+
+  margin-bottom: 1em;
+  padding: 0.2em;
+
+  transition: all 0.1s ease-in-out;
+}
+
+.menu [style-entry]:hover,
+.menu [style-entry]:active {
+  color: var(--clr-light-a0);
+  background-color: var(--clr-primary-a0);
+}
+
+.back {
+  display: flex;
+  background-color: transparent;
+  color: var(--clr-primary-a0);
+  border: none;
+
+  margin: 0;
+  padding: 0;
+
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translate(-120%, -50%);
+  border-radius: 0.4em;
+}
+
+.back:hover,
+.back:focus-within {
+  background-color: var(--clr-primary-a0);
+  color: var(--clr-surface-a0);
+}

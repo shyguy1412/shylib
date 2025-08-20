@@ -1,32 +1,38 @@
-import { ComponentChild, h } from "preact";
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { Dispatch, StateUpdater, useEffect, useState } from "preact/hooks";
+
+type AsyncState<V> = {
+  resolved: false,
+  value: undefined;
+} | {
+  resolved: true,
+  value: V;
+};
+
 
 /**
- * Create an async component that can be logical or'd with a default/loading screen
- * 
- * 
- * @param promise Promise that resolves to the props of the async component
- * @param component async component
- * @param deps dependencies to memo component
- * @returns null or the rendered component
+ * useState for promises
+ * @returns 
  */
-export function useAsync<
-  P extends Promise<any>,
-  V = P extends Promise<infer V> ? V : never
->(promise: P, component: (props: V) => h.JSX.Element, deps?: any[]) {
+export function useAsync<V>(initialPromise?: Promise<V>): [
+  AsyncState<V>, Dispatch<StateUpdater<Promise<Awaited<V> | undefined>>>
+] {
 
-  const componentMemo = useCallback(component, [...deps??[Symbol()]]);
-  const [View, setView] = useState<ComponentChild | null>(null);
+  const [promise, setPromise] = useState(Promise.resolve(initialPromise));
+  const [value, setValue] = useState<V>();
+  const [resolved, setResolved] = useState(false);
 
   useEffect(() => {
-    setView(null);
-    promise.then((props) => {
-      setView(
-        h(componentMemo, props)
-      );
-    }
-    );
-  }, [promise, componentMemo]);
+    setValue(undefined);
+    setResolved(false);
+    promise.then(setValue).then(() => setResolved(true));
+  }, [promise]);
 
-  return View;
+  if (resolved) return [{
+    resolved,
+    value: value!,
+  }, setPromise];
+  else return [{
+    resolved,
+    value: undefined,
+  }, setPromise];
 };

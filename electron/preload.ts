@@ -1,4 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
+import { bridge } from "./ModuleBridge";
+
+bridge();
 
 contextBridge.exposeInMainWorld("titlebar", {
   close: () => ipcRenderer.invoke("close"),

@@ -1,11 +1,11 @@
 import { createStore } from "@xstate/store";
 import { useSelector } from "@xstate/store/react";
-import { ComponentChild, Fragment, h, VNode } from "preact";
+import { Attributes, ComponentChild, Fragment, FunctionComponent, h } from "preact";
 import { useCallback } from "preact/hooks";
 import { memo } from "preact/compat";
 import { Lumber } from "@/lib/log/Lumber";
 
-export type View = () => h.JSX.Element;
+export type View<T extends Attributes = {}> = FunctionComponent<T>;
 
 export type Router<R extends string> = ReturnType<
   typeof createRouter<RouteTable<R>>
@@ -14,12 +14,15 @@ export type RouteTable<R extends string = string> = { [route in R]: View };
 
 const None: View = () => h(Fragment, {});
 
+//? subrouting: allow for a route to have its own router that can be reflected in the breadcrumbs
+//? route state
+
 export function createRouter<R extends RouteTable>(
   routeTable: R,
   initial: keyof R,
 ) {
   const store = createStore({
-    context: { route: [initial], view: routeTable[initial]! },
+    context: { route: [initial], view: routeTable[initial] },
     on: {
       setRoute: (_, event: { route: keyof R; }) => ({
         route: [event.route],
@@ -69,6 +72,7 @@ namespace Breadcrumbs {
     separator?: ComponentChild;
   };
 }
+
 export const Breadcrumbs = memo(<T extends string>({ router, separator }: Breadcrumbs.Props<T>) => {
   const { breadcrumbs, followBreadcrumb } = useRouter(router);
 
@@ -76,13 +80,13 @@ export const Breadcrumbs = memo(<T extends string>({ router, separator }: Breadc
 
   return breadcrumbs
     .map((crumb) => <span
-      style-breadcrumb
+      style-breadcrumb=""
       onClick={useCallback(() => followBreadcrumb(crumb), [router])}
     >{crumb}</span>)
     .reduce((prev, cur) => <>
       {prev}
       &nbsp;
-      <span style-breadcrumb-separator>{separator ?? ">"}</span>
+      <span style-breadcrumb-separator="" >{separator ?? ">"}</span>
       &nbsp;
       {cur}
     </>);

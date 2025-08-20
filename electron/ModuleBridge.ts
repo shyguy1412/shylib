@@ -32,24 +32,46 @@ export function bridge<T extends Record<string, unknown>>(moduleOrNamespace?: T,
 
 async function bridgeRender(namespace: string) {
   const methods: string[] = await ipcRenderer.invoke(`__module_bridge_get_api_methods_${namespace}`);
-  contextBridge.exposeInMainWorld(namespace, methods.reduce((prev, cur) => {
+  const constants: string[] = await ipcRenderer.invoke(`__module_bridge_get_constants_${namespace}`);
+  const bridge: Record<string, any> = {};
+
+  methods.reduce((prev, cur) => {
     prev[cur] = (...args: any[]) => {
       return ipcRenderer.invoke(`__module_bridge_${namespace}_${cur}`, ...args.map(serialize));
     };
     return prev;
-  }, {} as Record<string, Function>));
+  }, bridge);
+
+
+  await constants.reduce(async (prev, cur) => {
+    (await prev)[cur] = await ipcRenderer.invoke(`__module_bridge_${namespace}_${cur}`);
+    return prev;
+  }, Promise.resolve(bridge));
+
+
+  contextBridge.exposeInMainWorld(namespace, bridge);
 }
 
 const namespaces = new Set<string>();
 
 function bridgeMain<T extends Record<string, unknown>>(module: T, namespace: string) {
   const methods: string[] = [];
+  const constants: string[] = [];
 
   namespaces.add(namespace);
 
   for (const key in module) {
     const value = module[key];
-    if (typeof value != "function") continue;
+
+    if (typeof value != "function") {
+      ipcMain.handle(`__module_bridge_${namespace}_${key}`, () => {
+        return value;
+      });
+      constants.push(key);
+
+      continue;
+    };
+
     methods.push(key);
     ipcMain.handle(`__module_bridge_${namespace}_${key}`, (_, ...args) => {
       return value(...args.map(deserialize));
@@ -57,6 +79,7 @@ function bridgeMain<T extends Record<string, unknown>>(module: T, namespace: str
   }
 
   ipcMain.handle(`__module_bridge_get_api_methods_${namespace}`, () => methods);
+  ipcMain.handle(`__module_bridge_get_constants_${namespace}`, () => constants);
 }
 
 (async () => {
@@ -72,7 +95,7 @@ function serialize(arg: any) {
     name: `__module_bridge_serialized_${serialized_value_id++}`
   };
 
-  ipcRenderer.on(callback_token.name, (e, ...args) => arg(...args));
+  ipcRenderer.once(callback_token.name, (e, ...args) => arg(...args));
 
   return callback_token;
 }
