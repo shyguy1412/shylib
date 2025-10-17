@@ -171,20 +171,20 @@ pub fn export(args: TokenStream, input: TokenStream) -> TokenStream {
     let item = parse_macro_input!(input as syn::Item);
 
     match item {
-        syn::Item::Enum(item_enum) => export_item_enum(args, item_enum),
+        // syn::Item::Enum(item_enum) => export_item_enum(args, item_enum),
+        // syn::Item::Struct(item_struct) => export_item_struct(args, item_struct),
         syn::Item::Fn(item_fn) => export_item_function(args, item_fn),
-        syn::Item::Struct(item_struct) => export_item_struct(args, item_struct),
         _ => TokenStream::new(),
     }
 }
 
-fn export_item_struct(args: TokenStream, item_enum: syn::ItemStruct) -> TokenStream {
-    TokenStream::new()
-}
+// fn export_item_struct(args: TokenStream, item_enum: syn::ItemStruct) -> TokenStream {
+//     TokenStream::new()
+// }
 
-fn export_item_enum(args: TokenStream, item_enum: syn::ItemEnum) -> TokenStream {
-    TokenStream::new()
-}
+// fn export_item_enum(args: TokenStream, item_enum: syn::ItemEnum) -> TokenStream {
+//     TokenStream::new()
+// }
 
 fn get_generic<'a>(ty: &'a syn::Type) -> Option<&'a syn::Type> {
     match ty {
