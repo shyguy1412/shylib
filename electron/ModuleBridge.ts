@@ -22,8 +22,12 @@ export function bridge<T extends Record<string, unknown>>(moduleOrNamespace?: T,
   }
 
   if (ipcRenderer) {
-    ipcRenderer.invoke('__module_bridge_get_namespaces')
-      .then(namespaces => namespaces.map(bridgeRender));
+    contextBridge.exposeInMainWorld("__module_bridge_init", new Promise<void>(async resolve => {
+      ipcRenderer.invoke('__module_bridge_get_namespaces')
+        .then(namespaces => Promise.all(namespaces.map(bridgeRender)))
+        .catch(_ => _)
+        .finally(resolve);
+    }));
     return;
   }
 

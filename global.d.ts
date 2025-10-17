@@ -11,6 +11,8 @@ declare global {
     minimize: () => void;
     isMaximised: () => Promise<boolean>;
   };
+
+  const __module_bridge_init: Promise<void>;
 }
 
 export default global;
