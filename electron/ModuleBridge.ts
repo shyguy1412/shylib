@@ -99,7 +99,7 @@ function serialize(arg: any) {
     name: `__module_bridge_serialized_${serialized_value_id++}`
   };
 
-  ipcRenderer.once(callback_token.name, (e, ...args) => arg(...args));
+  ipcRenderer.on(callback_token.name, (e, ...args) => arg(...args));
 
   return callback_token;
 }
