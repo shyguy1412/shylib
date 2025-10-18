@@ -1,3 +1,4 @@
+use core::f64;
 use std::{cell::OnceCell, collections::HashMap, sync::Mutex};
 
 pub use bondage_macros::*;
@@ -9,14 +10,16 @@ pub static JS_EXPORTS: [(&str, fn(FunctionContext) -> JsResult<JsValue>)];
 /**
  * M stores the inner value of a monad if the monad is transferrable
  */
-pub trait Transferable<T: Value, M = T> {
-    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, T>>;
-    fn from_js<'cx>(ctx: &mut Cx<'cx>, object: Handle<'cx, T>) -> NeonResult<Self>
+pub trait Transferable {
+    type JsForm: Value;
+    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, Self::JsForm>>;
+    fn from_js<'cx>(ctx: &mut Cx<'cx>, object: Handle<'cx, Self::JsForm>) -> NeonResult<Self>
     where
         Self: Sized;
 }
 
-impl Transferable<JsString> for String {
+impl Transferable for String {
+    type JsForm = JsString;
     fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, JsString>> {
         Ok(ctx.string(self))
     }
@@ -26,7 +29,8 @@ impl Transferable<JsString> for String {
     }
 }
 
-impl Transferable<JsNumber> for f64 {
+impl Transferable for f64 {
+    type JsForm = JsNumber;
     fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, JsNumber>> {
         Ok(ctx.number(*self))
     }
@@ -36,7 +40,8 @@ impl Transferable<JsNumber> for f64 {
     }
 }
 
-impl Transferable<JsBoolean> for bool {
+impl Transferable for bool {
+    type JsForm = JsBoolean;
     fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, JsBoolean>> {
         Ok(ctx.boolean(*self))
     }
@@ -46,11 +51,11 @@ impl Transferable<JsBoolean> for bool {
     }
 }
 
-impl<T, O> Transferable<JsArray, O> for Vec<T>
+impl<T> Transferable for Vec<T>
 where
-    T: Transferable<O>,
-    O: Value,
+    T: Transferable,
 {
+    type JsForm = JsArray;
     fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, JsArray>> {
         let arr = JsArray::new(ctx, self.len());
 
@@ -71,7 +76,7 @@ where
         let vec: Vec<_> = vec
             .iter()
             .filter_map(|el| {
-                el.downcast::<O, Cx>(ctx)
+                el.downcast::<T::JsForm, Cx>(ctx)
                     .ok()
                     .and_then(|el| T::from_js(ctx, el).ok())
             })
@@ -81,11 +86,11 @@ where
     }
 }
 
-impl<T, O> Transferable<JsValue, O> for Option<T>
+impl<T> Transferable for Option<T>
 where
-    T: Transferable<O>,
-    O: Value,
+    T: Transferable,
 {
+    type JsForm = JsValue;
     fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, JsValue>> {
         match self {
             Some(value) => Ok(value.to_js(ctx)?.as_value(ctx)),
@@ -94,8 +99,8 @@ where
     }
 
     fn from_js<'cx>(ctx: &mut Cx<'cx>, value: Handle<'cx, JsValue>) -> NeonResult<Self> {
-        let value = match value.is_a::<O, _>(ctx) {
-            true => value.downcast::<O, _>(ctx).unwrap(),
+        let value = match value.is_a::<T::JsForm, _>(ctx) {
+            true => value.downcast::<T::JsForm, _>(ctx).unwrap(),
             false => return Ok(None),
         };
 

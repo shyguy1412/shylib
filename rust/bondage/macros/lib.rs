@@ -378,7 +378,8 @@ pub fn transferable_jsobject_derive(input: TokenStream) -> TokenStream {
 
     quote::quote! {
         #[automatically_derived]
-        impl Transferable<JsObject> for #ident{
+        impl Transferable for #ident{
+            type JsForm = JsObject;
             fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, JsObject>> {
                 let object = ctx.empty_object();
 
