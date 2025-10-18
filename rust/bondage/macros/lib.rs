@@ -122,7 +122,7 @@ pub fn main(_: TokenStream, input: TokenStream) -> TokenStream {
     let mut guard = DELCS.write().unwrap();
     guard.push(DeclType::ExportDecl(
         "on".to_string(),
-        "<T extends keyof Events>(event:T, callback:(...args:Events[T]) => void) => void"
+        "<T extends keyof Events>(event:T, callback:(event:Events[T]) => void) => void"
             .to_string(),
     ));
     drop(guard);
