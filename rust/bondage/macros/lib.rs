@@ -68,14 +68,29 @@ fn is_io_allowed() -> bool {
 ///! There are still a bunch of cases missing here I bet
 fn rust_type_to_js(rust_type: &str) -> String {
     match rust_type {
-        "f64" => "number",
-        "JsNumber" => "number",
+        "f64" | "JsNumber" => "number",
+        "String" | "JsString" => "string",
+        "JsBoolean" | "bool" => "boolean",
         "JsValue" => "any",
-        "String" => "string",
-        "JsString" => "string",
         "JsObject" => "object",
-        "JsBoolean" => "boolean",
-        _ => rust_type,
+        _ => {
+            let ty: syn::TypePath = parse_str(rust_type).expect("All types should be paths");
+
+            let ident =ty.path.segments.first().unwrap().ident.to_string();
+
+            let inner = get_generic(&syn::Type::Path(ty)).map(|inner| match inner {
+                syn::Type::Path(type_path) => {
+                    rust_type_to_js(&type_path.path.to_token_stream().to_string())
+                }
+
+                _ => "NOT A PATH :(".to_string(),
+            });
+
+            return match inner {
+                Some(inner) => format!("{}<{}>", ident, inner),
+                None => ident,
+            };
+        }
     }
     .to_string()
 }
@@ -122,9 +137,16 @@ pub fn main(_: TokenStream, input: TokenStream) -> TokenStream {
     let mut guard = DELCS.write().unwrap();
     guard.push(DeclType::ExportDecl(
         "on".to_string(),
-        "<T extends keyof Events>(event:T, callback:(event:Events[T]) => void) => void"
-            .to_string(),
+        "<T extends keyof Events>(event:T, callback:(event:Events[T]) => void) => void".to_string(),
     ));
+
+    guard.push(DeclType::TypeDecl(
+        "Option<T>".to_string(),
+        "T|undefined".to_string(),
+    ));
+
+    guard.push(DeclType::TypeDecl("Vec<T>".to_string(), "T[]".to_string()));
+
     drop(guard);
 
     if is_io_allowed() {
