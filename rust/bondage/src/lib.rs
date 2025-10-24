@@ -108,15 +108,15 @@ where
     }
 }
 
-pub trait Event {
+pub trait Event: Transferable {
     fn name(&self) -> &str;
-    fn data<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Vec<Handle<'cx, JsValue>>>;
+    fn data<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, JsValue>>;
 }
 
 #[derive(Debug)]
 pub struct EventSystem {
     channel: Channel,
-    listener: Option<Root<JsFunction>>
+    listener: Option<Root<JsFunction>>,
 }
 
 pub trait EventSystemTrait {
@@ -149,10 +149,7 @@ impl EventSystemTrait for Mutex<OnceCell<EventSystem>> {
             let mut bind = callback.bind(&mut ctx);
 
             bind.arg(name)?;
-
-            for arg in data.iter() {
-                bind.arg(*arg)?;
-            }
+            bind.arg(data)?;
 
             bind.exec()?;
             Ok(())

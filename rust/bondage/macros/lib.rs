@@ -76,7 +76,7 @@ fn rust_type_to_js(rust_type: &str) -> String {
         _ => {
             let ty: syn::TypePath = parse_str(rust_type).expect("All types should be paths");
 
-            let ident =ty.path.segments.first().unwrap().ident.to_string();
+            let ident = ty.path.segments.first().unwrap().ident.to_string();
 
             let inner = get_generic(&syn::Type::Path(ty)).map(|inner| match inner {
                 syn::Type::Path(type_path) => {
@@ -97,6 +97,14 @@ fn rust_type_to_js(rust_type: &str) -> String {
 
 fn declare_item_struct(item_struct: &syn::ItemStruct) {
     let mut guard = DELCS.write().unwrap();
+    let ident = item_struct.ident.to_string();
+
+    if guard.iter().any(|decl| match decl {
+        DeclType::TypeDecl(name, _) => *name == ident,
+        _ => false,
+    }) {
+        return;
+    }
 
     let props = item_struct
         .fields
@@ -116,10 +124,7 @@ fn declare_item_struct(item_struct: &syn::ItemStruct) {
             format!("{}\n    {}: {}", prev, ident, ty)
         });
 
-    guard.push(DeclType::TypeDecl(
-        item_struct.ident.to_string(),
-        format!("{{{}\n  }}", props),
-    ));
+    guard.push(DeclType::TypeDecl(ident, format!("{{{}\n  }}", props)));
 
     drop(guard);
 }
@@ -331,12 +336,12 @@ pub fn event_derive(input: TokenStream) -> TokenStream {
         file.write_all(dts.as_bytes()).unwrap();
     }
 
-    let data: Vec<syn::Expr> = item_struct
-        .fields
-        .iter()
-        .filter_map(|field| field.ident.as_ref())
-        .map(|ident| parse_quote!(self.#ident.to_js(ctx)?.as_value(ctx)))
-        .collect();
+    // let data: Vec<syn::Expr> = item_struct
+    //     .fields
+    //     .iter()
+    //     .filter_map(|field| field.ident.as_ref())
+    //     .map(|ident| parse_quote!(self.#ident.to_js(ctx)?.as_value(ctx)))
+    //     .collect();
 
     quote! {
     //should generate
@@ -345,8 +350,8 @@ pub fn event_derive(input: TokenStream) -> TokenStream {
             #event_name
         }
 
-        fn data<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Vec<Handle<'cx, JsValue>>> {
-            Ok(vec![#(#data),*])
+        fn data<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, JsValue>> {
+            Ok(self.to_js(ctx)?.as_value(ctx))
         }
     }
     }
