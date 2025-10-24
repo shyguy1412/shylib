@@ -1,5 +1,5 @@
 use core::f64;
-use std::{cell::OnceCell, collections::HashMap, sync::Mutex};
+use std::{cell::OnceCell, sync::Mutex};
 
 pub use bondage_macros::*;
 pub use neon::prelude::*;
@@ -116,19 +116,19 @@ pub trait Event {
 #[derive(Debug)]
 pub struct EventSystem {
     channel: Channel,
-    map: HashMap<String, Root<JsFunction>>,
+    listener: Option<Root<JsFunction>>
 }
 
 pub trait EventSystemTrait {
-    fn add_event_listener(&self, event: String, callback: Root<JsFunction>);
+    fn set_event_listener(&self, callback: Root<JsFunction>);
     fn dispatch_event<T: Event + Send + 'static>(&'static self, event: T);
 }
 
 impl EventSystemTrait for Mutex<OnceCell<EventSystem>> {
-    fn add_event_listener(&self, event: String, callback: Root<JsFunction>) {
+    fn set_event_listener(&self, callback: Root<JsFunction>) {
         let mut lock = self.lock().unwrap();
         let event_system = lock.get_mut().unwrap();
-        event_system.map.insert(event, callback);
+        event_system.listener = Some(callback);
     }
 
     fn dispatch_event<T: Event + Send + 'static>(&'static self, event: T) {
@@ -141,12 +141,14 @@ impl EventSystemTrait for Mutex<OnceCell<EventSystem>> {
 
             let data = event.data(&mut ctx)?;
 
-            let callback = match event_system.map.get(name) {
+            let callback = match &event_system.listener {
                 Some(cb) => cb.to_inner(&mut ctx),
                 None => return Ok(()),
             };
 
             let mut bind = callback.bind(&mut ctx);
+
+            bind.arg(name)?;
 
             for arg in data.iter() {
                 bind.arg(*arg)?;
@@ -162,7 +164,7 @@ impl EventSystem {
     pub fn new(channel: Channel) -> Self {
         EventSystem {
             channel,
-            map: HashMap::new(),
+            listener: None,
         }
     }
 }

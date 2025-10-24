@@ -136,8 +136,8 @@ pub fn main(_: TokenStream, input: TokenStream) -> TokenStream {
 
     let mut guard = DELCS.write().unwrap();
     guard.push(DeclType::ExportDecl(
-        "on".to_string(),
-        "<T extends keyof Events>(event:T, callback:(event:Events[T]) => void) => void".to_string(),
+        "setEventListener".to_string(),
+        "(callback:(event:keyof Events, data: Events[keyof Events]) => void) => void".to_string(),
     ));
 
     guard.push(DeclType::TypeDecl(
@@ -171,11 +171,11 @@ pub fn main(_: TokenStream, input: TokenStream) -> TokenStream {
         }
 
         //Export "on" function to register event handlers
-        ctx.export_function("on", |mut ctx: FunctionContext| {
-            let event = ctx.argument::<JsString>(0)?.value(&mut ctx);
-            let callback = ctx.argument::<JsFunction>(1)?.root(&mut ctx);
+        ctx.export_function("setEventListener", |mut ctx: FunctionContext| {
+            // let event = ctx.argument::<JsString>(0)?.value(&mut ctx);
+            let callback = ctx.argument::<JsFunction>(0)?.root(&mut ctx);
 
-            EVENT_SYSTEM.add_event_listener(event, callback);
+            EVENT_SYSTEM.set_event_listener(callback);
 
             Ok(ctx.undefined())
         })?;
