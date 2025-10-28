@@ -166,3 +166,26 @@ impl EventSystem {
     }
 }
 pub static EVENT_SYSTEM: Mutex<OnceCell<EventSystem>> = Mutex::new(OnceCell::new());
+
+pub fn println<T: Transferable>(ctx: &mut Cx<'_>, msg: &T) {
+    let msg = if let Some(msg) = msg.to_js(ctx).ok() {
+        msg
+    } else {
+        return;
+    };
+
+    let log_option = ctx
+        .global::<JsObject>("console")
+        .and_then(|console| console.method(ctx, "log"))
+        .ok();
+
+    let mut log = if let Some(log_inner) = log_option {
+        log_inner
+    } else {
+        return;
+    };
+
+    let _ = log.arg(msg);
+
+    let _ = log.call::<()>();
+}
