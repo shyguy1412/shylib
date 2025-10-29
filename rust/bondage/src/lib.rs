@@ -18,6 +18,19 @@ pub trait Transferable {
         Self: Sized;
 }
 
+pub trait Sendable {
+    type JsForm: Value;
+    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, Self::JsForm>>;
+}
+
+impl<T: Transferable> Sendable for T {
+    type JsForm = T::JsForm;
+
+    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, Self::JsForm>> {
+        self.to_js(ctx)
+    }
+}
+
 impl Transferable for String {
     type JsForm = JsString;
     fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, JsString>> {
@@ -26,6 +39,14 @@ impl Transferable for String {
 
     fn from_js<'cx>(ctx: &mut Cx<'cx>, object: Handle<'cx, JsString>) -> NeonResult<Self> {
         Ok(object.value(ctx))
+    }
+}
+
+impl Sendable for &str{
+    type JsForm = JsString;
+
+    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, Self::JsForm>> {
+        Ok(ctx.string(self))
     }
 }
 
@@ -167,7 +188,7 @@ impl EventSystem {
 }
 pub static EVENT_SYSTEM: Mutex<OnceCell<EventSystem>> = Mutex::new(OnceCell::new());
 
-pub fn println<T: Transferable>(ctx: &mut Cx<'_>, msg: &T) {
+pub fn console_log<T: Sendable>(ctx: &mut Cx<'_>, msg: &T) {
     let msg = if let Some(msg) = msg.to_js(ctx).ok() {
         msg
     } else {
