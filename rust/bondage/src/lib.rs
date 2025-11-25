@@ -12,29 +12,37 @@ pub static JS_EXPORTS: [(&str, fn(FunctionContext) -> JsResult<JsValue>)];
  */
 pub trait Transferable {
     type JsForm: Value;
-    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, Self::JsForm>>;
+    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> Handle<'cx, Self::JsForm>;
     fn from_js<'cx>(ctx: &mut Cx<'cx>, object: Handle<'cx, Self::JsForm>) -> NeonResult<Self>
     where
         Self: Sized;
 }
 
-pub trait Sendable {
+pub trait Sendable<'cx> {
     type JsForm: Value;
-    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, Self::JsForm>>;
+    fn to_js(&self, ctx: &mut Cx<'cx>) -> Handle<'cx, Self::JsForm>;
 }
 
-impl<T: Transferable> Sendable for T {
+impl<'cx, T: Transferable> Sendable<'cx> for T {
     type JsForm = T::JsForm;
 
-    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, Self::JsForm>> {
+    fn to_js(&self, ctx: &mut Cx<'cx>) -> Handle<'cx, Self::JsForm> {
         self.to_js(ctx)
+    }
+}
+
+impl<'cx, V: Value> Sendable<'cx> for Handle<'cx, V> {
+    type JsForm = V;
+
+    fn to_js(&self, _: &mut Cx<'cx>) -> Handle<'cx, Self::JsForm> {
+        *self
     }
 }
 
 impl Transferable for String {
     type JsForm = JsString;
-    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, JsString>> {
-        Ok(ctx.string(self))
+    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> Handle<'cx, JsString> {
+        ctx.string(self)
     }
 
     fn from_js<'cx>(ctx: &mut Cx<'cx>, object: Handle<'cx, JsString>) -> NeonResult<Self> {
@@ -42,18 +50,18 @@ impl Transferable for String {
     }
 }
 
-impl Sendable for &str{
+impl<'cx> Sendable<'cx> for &str {
     type JsForm = JsString;
 
-    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, Self::JsForm>> {
-        Ok(ctx.string(self))
+    fn to_js(&self, ctx: &mut Cx<'cx>) -> Handle<'cx, Self::JsForm> {
+        ctx.string(self)
     }
 }
 
 impl Transferable for f64 {
     type JsForm = JsNumber;
-    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, JsNumber>> {
-        Ok(ctx.number(*self))
+    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> Handle<'cx, JsNumber> {
+        ctx.number(*self)
     }
 
     fn from_js<'cx>(ctx: &mut Cx<'cx>, object: Handle<'cx, JsNumber>) -> NeonResult<Self> {
@@ -63,12 +71,27 @@ impl Transferable for f64 {
 
 impl Transferable for bool {
     type JsForm = JsBoolean;
-    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, JsBoolean>> {
-        Ok(ctx.boolean(*self))
+    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> Handle<'cx, JsBoolean> {
+        ctx.boolean(*self)
     }
 
     fn from_js<'cx>(ctx: &mut Cx<'cx>, object: Handle<'cx, JsBoolean>) -> NeonResult<Self> {
         Ok(object.value(ctx))
+    }
+}
+
+impl Transferable for () {
+    type JsForm = JsUndefined;
+
+    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> Handle<'cx, Self::JsForm> {
+        ctx.undefined()
+    }
+
+    fn from_js<'cx>(_: &mut Cx<'cx>, _: Handle<'cx, Self::JsForm>) -> NeonResult<Self>
+    where
+        Self: Sized,
+    {
+        Ok(())
     }
 }
 
@@ -77,18 +100,15 @@ where
     T: Transferable,
 {
     type JsForm = JsArray;
-    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, JsArray>> {
+    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> Handle<'cx, JsArray> {
         let arr = JsArray::new(ctx, self.len());
 
         self.iter().enumerate().for_each(|(i, el)| {
-            let el = el
-                .to_js(ctx)
-                .map(|v| v.as_value(ctx))
-                .unwrap_or(ctx.undefined().as_value(ctx));
+            let el = el.to_js(ctx).as_value(ctx);
             let _ = arr.set(ctx, i.to_string().as_str(), el);
         });
 
-        Ok(arr)
+        arr
     }
 
     fn from_js<'cx>(ctx: &mut Cx<'cx>, array: Handle<'cx, JsArray>) -> NeonResult<Self> {
@@ -112,10 +132,10 @@ where
     T: Transferable,
 {
     type JsForm = JsValue;
-    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> NeonResult<Handle<'cx, JsValue>> {
+    fn to_js<'cx>(&self, ctx: &mut Cx<'cx>) -> Handle<'cx, JsValue> {
         match self {
-            Some(value) => Ok(value.to_js(ctx)?.as_value(ctx)),
-            None => Ok(ctx.undefined().upcast::<JsValue>()),
+            Some(value) => value.to_js(ctx).as_value(ctx),
+            None => ctx.undefined().upcast::<JsValue>(),
         }
     }
 
@@ -188,21 +208,14 @@ impl EventSystem {
 }
 pub static EVENT_SYSTEM: Mutex<OnceCell<EventSystem>> = Mutex::new(OnceCell::new());
 
-pub fn console_log<T: Sendable>(ctx: &mut Cx<'_>, msg: &T) {
-    let msg = if let Some(msg) = msg.to_js(ctx).ok() {
-        msg
-    } else {
-        return;
-    };
+pub fn console_log<'cx, T: Sendable<'cx>>(ctx: &mut Cx<'cx>, msg: &T) {
+    let msg = msg.to_js(ctx);
 
-    let log_option = ctx
+    let Some(mut log) = ctx
         .global::<JsObject>("console")
         .and_then(|console| console.method(ctx, "log"))
-        .ok();
-
-    let mut log = if let Some(log_inner) = log_option {
-        log_inner
-    } else {
+        .ok()
+    else {
         return;
     };
 

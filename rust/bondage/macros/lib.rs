@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use quote::{ToTokens, quote};
 use std::{io::Write, sync::RwLock};
-use syn::{Token, parse::Parser, parse_macro_input, parse_quote, parse_str};
+use syn::{Token, parse::Parser, parse_macro_input, parse_str};
 
 enum DeclType {
     FunctionDecl(String, Vec<String>, String),
@@ -278,7 +278,7 @@ fn export_item_function(args: TokenStream, item_fn: syn::ItemFn) -> TokenStream 
     quote::quote! {
         #[linkme::distributed_slice(JS_EXPORTS)]
         static #mangled_ident: (&str, fn(FunctionContext) -> JsResult<JsValue>) =
-            (#name, |mut arg:FunctionContext|#item_fn_ident(&mut arg).and_then(|ret| ret.to_js(&mut arg)).map(|ret| ret.upcast()));
+            (#name, |mut arg:FunctionContext|#item_fn_ident(&mut arg).map(|ret| Sendable::to_js(&ret, &mut arg)).map(|ret| ret.upcast()));
 
        #item_fn
 
