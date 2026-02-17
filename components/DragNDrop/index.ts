@@ -1,2 +1,2 @@
-export * from "./DragTarget";
-export * from "./DropTarget";
+export * from './DragTarget';
+export * from './DropTarget';

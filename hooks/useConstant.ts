@@ -1,4 +1,4 @@
-import { useMemo } from "preact/hooks";
+import { useMemo } from 'preact/hooks';
 
 /**
  * Shortcut for a memoised value that wont ever change
@@ -7,5 +7,5 @@ import { useMemo } from "preact/hooks";
  * @returns
  */
 export function useConstant<T>(constant: T) {
-  return useMemo(() => constant, []);
+    return useMemo(() => constant, []);
 }
