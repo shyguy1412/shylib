@@ -1,11 +1,18 @@
 import { createStore } from '@xstate/store';
-import { useSelector } from '@xstate/store/react';
-import { Attributes, ComponentChild, Fragment, FunctionComponent, h } from 'preact';
+import { useSelector } from '@xstate/store-react';
+import {
+    Attributes,
+    ComponentChild,
+    Fragment,
+    FunctionalComponent,
+    FunctionComponent,
+    h,
+} from 'preact';
 import { useCallback } from 'preact/hooks';
 import { memo } from 'preact/compat';
 import { Lumber } from '@/lib/log/Lumber';
 
-export type View<T extends Attributes = {}> = FunctionComponent<T>;
+export type View<T extends Attributes = {}> = (props: T) => h.JSX.Element;
 
 export type Router<R extends string> = ReturnType<
     typeof createRouter<RouteTable<R>>
