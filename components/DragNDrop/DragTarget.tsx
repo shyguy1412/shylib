@@ -22,7 +22,8 @@ export const DragStore = createStore({
             void context.ghostElements.delete(event.id),
         setData: (context, event: { id: number; data: any }) =>
             void context.data.set(event.id, event.data),
-        removeData: (context, event: { id: number }) => void context.data.delete(event.id),
+        removeData: (context, event: { id: number }) =>
+            void context.data.delete(event.id),
     },
 });
 

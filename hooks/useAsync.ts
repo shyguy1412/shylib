@@ -1,6 +1,6 @@
-import { Dispatch, StateUpdater, useEffect, useState } from 'preact/hooks';
+import { Dispatch, StateUpdater, useEffect, useMemo, useState } from 'preact/hooks';
 
-type AsyncState<V> = {
+export type AsyncState<V> = {
     resolved: false;
     value: undefined;
 } | {
@@ -8,33 +8,38 @@ type AsyncState<V> = {
     value: V;
 };
 
-/**
- * useState for promises
- * @returns
- */
-export function useAsync<V>(initialPromise?: Promise<V>): [
-    AsyncState<V>,
-    Dispatch<StateUpdater<Promise<Awaited<V> | undefined>>>,
-] {
-    const [promise, setPromise] = useState(Promise.resolve(initialPromise));
-    const [value, setValue] = useState<V>();
+export function usePromise<V>(promise: Promise<V> | (() => Promise<V>)): AsyncState<V> {
     const [resolved, setResolved] = useState(false);
+    const [value, setValue] = useState<V>();
 
     useEffect(() => {
         setValue(undefined);
         setResolved(false);
-        promise.then(setValue).then(() => setResolved(true));
+        (typeof promise == 'function' ? promise() : promise)
+            .then(setValue)
+            .then(() => setResolved(true));
     }, [promise]);
 
-    if (resolved) {
-        return [{
-            resolved,
-            value: value!,
-        }, setPromise];
-    } else {
-        return [{
-            resolved,
-            value: undefined,
-        }, setPromise];
-    }
+    return useMemo(
+        () => resolved ? { resolved, value: value! } : { resolved, value: undefined },
+        [resolved],
+    );
+}
+
+/**
+ * useState for promises
+ * @returns
+ */
+export function useAsync<V>(initial: Promise<V> | (() => Promise<V>)): [
+    AsyncState<V>,
+    Dispatch<StateUpdater<Promise<Awaited<V>>>>,
+] {
+    const [promise, setPromise] = useState(() => {
+        const initialPromise = typeof initial == 'function' ? initial() : initial;
+        return Promise.resolve(initialPromise);
+    });
+
+    const state = usePromise(promise);
+
+    return [state, setPromise];
 }

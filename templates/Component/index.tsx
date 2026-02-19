@@ -6,8 +6,8 @@ export namespace COMPONENT {
     export type Props = {};
 }
 
-const COMPONENTComponent = ({}: COMPONENT.Props) => {
+const _COMPONENT = ({}: COMPONENT.Props) => {
     return <div></div>;
 };
 
-export const COMPONENT = memo(COMPONENTComponent);
+export const COMPONENT = memo(_COMPONENT);

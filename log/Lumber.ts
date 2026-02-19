@@ -20,7 +20,8 @@ export const CommonInfoChannels = {
     HOOK: 'hook',
     LIFECYCLE: 'lifecycle',
 } as const;
-export type CommonInfoChannels = typeof CommonInfoChannels[keyof typeof CommonInfoChannels];
+export type CommonInfoChannels =
+    typeof CommonInfoChannels[keyof typeof CommonInfoChannels];
 
 export const CommonChannels = {
     ...CommonInfoChannels,
@@ -84,11 +85,14 @@ const Supress = ({ channel, children }: PropsWithChildren<Props>) => {
 };
 
 export const Lumber = {
-    createChannel: (channel: string, level: number) => store.trigger.setChannel({ channel, level }),
+    createChannel: (channel: string, level: number) =>
+        store.trigger.setChannel({ channel, level }),
 
-    blockChannel: (channel: string) => store.trigger.setChannel({ channel, blocked: true }),
+    blockChannel: (channel: string) =>
+        store.trigger.setChannel({ channel, blocked: true }),
 
-    unblockChannel: (channel: string) => store.trigger.setChannel({ channel, blocked: false }),
+    unblockChannel: (channel: string) =>
+        store.trigger.setChannel({ channel, blocked: false }),
 
     setLevel: (level: number) => store.trigger.setLevel({ level }),
 
