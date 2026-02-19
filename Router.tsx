@@ -1,30 +1,29 @@
 import { createStore } from '@xstate/store';
 import { useSelector } from '@xstate/store-react';
-import {
-    Attributes,
-    ComponentChild,
-    Fragment,
-    FunctionalComponent,
-    FunctionComponent,
-    h,
-} from 'preact';
+import { Attributes, ComponentChild, Fragment, h } from 'preact';
 import { useCallback } from 'preact/hooks';
 import { memo } from 'preact/compat';
 import { Lumber } from '@/lib/log/Lumber';
 
-export type View<T extends Attributes = {}> = (props: T) => h.JSX.Element;
+export type View<T = {}> = (props: T) => h.JSX.Element;
 
-export type Router<R extends string> = ReturnType<
-    typeof createRouter<RouteTable<R>>
+export type Router<R extends string = string, V extends View<any> = View<any>> = ReturnType<
+    typeof createRouter<RouteTable<R, V>>
 >;
-export type RouteTable<R extends string = string> = { [route in R]: View };
 
-const None: View = () => h(Fragment, {});
+export type RouteTable<
+    R extends string = string,
+    V extends View<any> = View,
+> = {
+    [route in R]: V;
+};
+
+const None: View = () => h(Fragment, {} as any);
 
 //? subrouting: allow for a route to have its own router that can be reflected in the breadcrumbs
 //? route state
 
-export function createRouter<R extends RouteTable>(
+export function createRouter<R extends RouteTable<string, View<any>>>(
     routeTable: R,
     initial: keyof R,
 ) {
@@ -35,11 +34,17 @@ export function createRouter<R extends RouteTable>(
                 route: [event.route],
                 view: routeTable[event.route] ?? None,
             }),
-            addBreadcrumb: ({ route }, event: { route: keyof R }) => ({
+            addBreadcrumb: (
+                { route },
+                event: { route: keyof R },
+            ) => ({
                 route: [...route, event.route],
                 view: routeTable[event.route] ?? None,
             }),
-            followBreadcrumb: ({ route }, event: { route: keyof R }) => ({
+            followBreadcrumb: (
+                { route },
+                event: { route: keyof R },
+            ) => ({
                 route: route.slice(0, route.indexOf(event.route) + 1),
                 view: routeTable[event.route] ?? None,
             }),
@@ -53,7 +58,9 @@ export function createRouter<R extends RouteTable>(
     return store;
 }
 
-export function useRouter<R extends string>(router: Router<R>) {
+export function useRouter<R extends string, V extends View<any>>(
+    router: Router<R, V>,
+) {
     return {
         setRoute: useCallback(
             (route: R) => router.trigger.setRoute({ route }),
@@ -83,14 +90,16 @@ export function useRouter<R extends string>(router: Router<R>) {
 }
 
 namespace Breadcrumbs {
-    export type Props<T extends string> = {
-        router: Router<T>;
+    export type Props<T extends string, V extends View<any>> = {
+        router: Router<T, V>;
         separator?: ComponentChild;
     };
 }
 
 export const Breadcrumbs = memo(
-    <T extends string>({ router, separator }: Breadcrumbs.Props<T>) => {
+    <T extends string, V extends View<any>>(
+        { router, separator }: Breadcrumbs.Props<T, V>,
+    ) => {
         const { breadcrumbs, followBreadcrumb } = useRouter(router);
 
         Lumber.log(Lumber.RENDER, 'BREADCRUMBS RENDER');
@@ -101,7 +110,8 @@ export const Breadcrumbs = memo(
                     style-breadcrumb=''
                     onClick={useCallback(() => followBreadcrumb(crumb), [
                         router,
-                    ])}>
+                    ])}
+                >
                     {crumb}
                 </span>
             ))
