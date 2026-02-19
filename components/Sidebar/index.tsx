@@ -95,7 +95,8 @@ const MenuItem = memo(({ menu, router }: MenuItemProps) => {
             style-active={route == menu.name ? '' : undefined}
             style-inactive={route != menu.name ? '' : undefined}
             class={style.menuitem}
-            onClick={() => setRoute(menu.name == route ? '@None' : menu.name)}>
+            onClick={() => setRoute(menu.name == route ? '@None' : menu.name)}
+        >
             {h(menu.icon, {})}
         </div>
     );

@@ -114,7 +114,9 @@ function bridgeMain<T extends Record<string, unknown>>(
 }
 
 (async () => {
-    if (!ipcMain) return;
+    if (!ipcMain) {
+        return;
+    }
     ipcMain.handle(
         `__module_bridge_get_namespaces`,
         () => namespaces[Symbol.iterator]().toArray(),
@@ -123,7 +125,9 @@ function bridgeMain<T extends Record<string, unknown>>(
 
 let serialized_value_id = 1;
 function serialize(arg: any) {
-    if (typeof arg != 'function') return arg;
+    if (typeof arg != 'function') {
+        return arg;
+    }
     const callback_token = {
         __module_bridge_tag: 'function',
         name: `__module_bridge_serialized_${serialized_value_id++}`,

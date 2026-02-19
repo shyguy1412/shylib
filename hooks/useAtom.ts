@@ -6,9 +6,9 @@ export function useAtom<T>(atom: Atom<T>): [T, Dispatch<StateUpdater<T>>] {
     return [
         useSelector(atom, (value) => value),
         useCallback((updater) => {
-            const newValue = typeof updater == 'function'
-                ? (updater as (state: T) => T)(atom.get())
-                : updater;
+            const newValue = typeof updater == 'function' ?
+                (updater as (state: T) => T)(atom.get()) :
+                updater;
             atom.set(newValue);
         }, [atom]),
     ];

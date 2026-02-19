@@ -26,7 +26,7 @@ export const Result = class<T, E> {
         }
 
         throw new Error(
-            "Result: Invariance Broken, is neither Err nor Ok variant",
+            'Result: Invariance Broken, is neither Err nor Ok variant',
         );
     }
 
@@ -40,7 +40,7 @@ export const Result = class<T, E> {
         }
 
         throw new Error(
-            "Result: Invariance Broken, is neither Err nor Ok variant",
+            'Result: Invariance Broken, is neither Err nor Ok variant',
         );
     }
 
@@ -54,7 +54,7 @@ export const Result = class<T, E> {
         }
 
         throw new Error(
-            "Result: Invariance Broken, is neither Err nor Ok variant",
+            'Result: Invariance Broken, is neither Err nor Ok variant',
         );
     }
 

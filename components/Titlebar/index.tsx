@@ -29,7 +29,9 @@ export const Titlebar = memo(
 
         const [isFullscreen] = useAtom(isFullscreenAtom);
 
-        if (isFullscreen) return undefined;
+        if (isFullscreen) {
+            return undefined;
+        }
 
         return (
             <div class={style.titlebar} style-titlebar=''>
@@ -44,19 +46,22 @@ export const Titlebar = memo(
                 <div style-titlebar-controls=''>
                     <div
                         style-titlebar-controls-minimize=''
-                        onClick={(_) => minimize()}>
+                        onClick={(_) => minimize()}
+                    >
                         <FaWindowMinimize />
                     </div>
 
                     <div
                         style-titlebar-controls-maximise=''
-                        onClick={(_) => maximize()}>
+                        onClick={(_) => maximize()}
+                    >
                         <FaRegSquare />
                     </div>
 
                     <div
                         style-titlebar-controls-close=''
-                        onClick={(_) => close()}>
+                        onClick={(_) => close()}
+                    >
                         <FaX />
                     </div>
                 </div>

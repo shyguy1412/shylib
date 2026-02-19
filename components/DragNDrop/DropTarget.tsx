@@ -59,7 +59,9 @@ export const DropTarget = memo((
     Lumber.log(Lumber.RENDER, 'DROP TARGET RENDER');
 
     const shouldAccept = useCallback((types?: readonly string[]) => {
-        if (!types) return false;
+        if (!types) {
+            return false;
+        }
         const valid = typeof accept == 'string' ? [accept] : accept;
         return valid.some((v) => types.includes(v));
     }, [accept]);
@@ -71,19 +73,25 @@ export const DropTarget = memo((
             class={style.droptarget + ' ' +
                 (attr.className ?? attr.class ?? '')}
             onDragEnter={(e) => {
-                if (shouldAccept(e.dataTransfer?.types)) e.preventDefault();
+                if (shouldAccept(e.dataTransfer?.types)) {
+                    e.preventDefault();
+                }
                 const ghost = getGhostFromEvent(e);
                 const data = getDataFromEvent(e);
                 onDragEnter?.(e, data, ghost);
             }}
             onDragOver={(e) => {
-                if (shouldAccept(e.dataTransfer?.types)) e.preventDefault();
+                if (shouldAccept(e.dataTransfer?.types)) {
+                    e.preventDefault();
+                }
                 const ghost = getGhostFromEvent(e);
                 const data = getDataFromEvent(e);
                 onDragOver?.(e, data, ghost);
             }}
             onDragLeave={(e) => {
-                if (shouldAccept(e.dataTransfer?.types)) e.preventDefault();
+                if (shouldAccept(e.dataTransfer?.types)) {
+                    e.preventDefault();
+                }
                 const ghost = getGhostFromEvent(e);
                 const data = getDataFromEvent(e);
                 onDragLeave?.(e, data, ghost);
@@ -91,7 +99,8 @@ export const DropTarget = memo((
             onDrop={(e) => {
                 const data = getDataFromEvent(e);
                 onDrop?.(e, data);
-            }}>
+            }}
+        >
         </div>
     );
 });

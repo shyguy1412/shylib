@@ -43,20 +43,22 @@ export function useFilter<T extends Table.Props['data']>(
     //then they are filter based on a keyword or predicate per column
     return data.filter((row) =>
         (
-            keywords
-                ? keywords.some((keyword) =>
+            keywords ?
+                keywords.some((keyword) =>
                     row.some((col) => col == keyword || compareStrings(col, keyword))
-                )
-                : true
+                ) :
+                true
         ) && (
-            Object.keys(column ?? {}).length
-                ? Object.entries(column!).map(([col, search]) => {
+            Object.keys(column ?? {}).length ?
+                Object.entries(column!).map(([col, search]) => {
                     if (typeof search == 'string') {
                         return row[+col] == search ||
                             row[+col]?.toString().includes(search);
-                    } else return search?.(row[+col]);
-                }).every((_) => _)
-                : true
+                    } else {
+                        return search?.(row[+col]);
+                    }
+                }).every((_) => _) :
+                true
         )
     );
     // ), [data, ...keywords ?? [], column]);

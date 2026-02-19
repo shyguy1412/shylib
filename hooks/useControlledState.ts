@@ -23,10 +23,10 @@ export function useControlledState<S, D extends any[]>(
 
     const update = useCallback((newState: StateUpdater<S>) => {
         const current = atom.get();
-        const computedState = typeof newState == 'function'
+        const computedState = typeof newState == 'function' ?
             // @ts-ignore ts appearently thinks functions arent callable
-            ? newState(current) as S
-            : newState;
+            newState(current) as S :
+            newState;
         updateEvent?.(computedState);
         atom.set(computedState);
     }, [atom, updateEvent]);

@@ -11,9 +11,7 @@ contextBridge.exposeInMainWorld('titlebar', {
 });
 
 contextBridge.exposeInMainWorld('fullscreen', {
-    onEnterFullscreen: (callback: () => void) =>
-        ipcRenderer.on('enter-full-screen', callback),
-    onLeaveFullscreen: (callback: () => void) =>
-        ipcRenderer.on('leave-full-screen', callback),
+    onEnterFullscreen: (callback: () => void) => ipcRenderer.on('enter-full-screen', callback),
+    onLeaveFullscreen: (callback: () => void) => ipcRenderer.on('leave-full-screen', callback),
     isFullscreen: () => ipcRenderer.invoke('is-fullscreen'),
 });

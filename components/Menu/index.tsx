@@ -29,7 +29,8 @@ export const Menu = memo(function <R extends string>({
             entries?.map(([route, label]) => (
                 <button
                     style-entry=''
-                    onClick={() => addBreadcrumb(route)}>
+                    onClick={() => addBreadcrumb(route)}
+                >
                     {label}
                 </button>
             )),

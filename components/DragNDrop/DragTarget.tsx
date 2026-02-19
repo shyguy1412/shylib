@@ -22,8 +22,7 @@ export const DragStore = createStore({
             void context.ghostElements.delete(event.id),
         setData: (context, event: { id: number; data: any }) =>
             void context.data.set(event.id, event.data),
-        removeData: (context, event: { id: number }) =>
-            void context.data.delete(event.id),
+        removeData: (context, event: { id: number }) => void context.data.delete(event.id),
     },
 });
 
@@ -31,12 +30,16 @@ const createGhostElement = (
     ev: TargetedEvent<HTMLDivElement, DragEvent>,
     ghostElement?: AnyComponent | string,
 ) => {
-    if (typeof ghostElement == 'string') return;
+    if (typeof ghostElement == 'string') {
+        return;
+    }
 
     //hides the native ghost image
     ev.dataTransfer?.setDragImage(document.head, 0, 0);
 
-    if (!ghostElement) return;
+    if (!ghostElement) {
+        return;
+    }
 
     const id = Math.random();
     ev.dataTransfer?.setData(`ghost-${id}`, '');
@@ -65,7 +68,9 @@ const createGhostElement = (
         if (
             ev.clientX == 0 && ev.clientY == 0 && ev.movementX == 0 &&
             ev.movementY == 0
-        ) return;
+        ) {
+            return;
+        }
 
         ghostImageElement.setAttribute(
             'data-pos-x',
@@ -110,7 +115,8 @@ export const DragTarget = memo(
                     createGhostElement(e, ghostElement);
                     onDragStart?.(e);
                 }}
-                {...attr}>
+                {...attr}
+            >
             </div>
         );
     },

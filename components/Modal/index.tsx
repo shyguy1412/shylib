@@ -30,7 +30,9 @@ export function useModal<T, P extends object = {}>(Content: Modal<T, P>) {
     const [data, setData] = useState<T>();
 
     useEffect(() => {
-        if (!open) return;
+        if (!open) {
+            return;
+        }
 
         const root = document.createElement('div');
         document.body.appendChild(root);
@@ -42,7 +44,8 @@ export function useModal<T, P extends object = {}>(Content: Modal<T, P>) {
                 <Content
                     {...open}
                     submit={setData}
-                    abort={() => openAtom.set(null)}>
+                    abort={() => openAtom.set(null)}
+                >
                 </Content>
             </Modal>,
             root,
@@ -67,12 +70,18 @@ const Modal = memo(({
     const ref = useRef<HTMLDialogElement>(null);
 
     useEffect(() => {
-        if (!ref.current) return;
+        if (!ref.current) {
+            return;
+        }
         const el = ref.current;
         const observer = new MutationObserver((mutations) => {
             for (const mutation of mutations) {
-                if (mutation.attributeName != 'open') continue;
-                if (!el.open) open.set(false);
+                if (mutation.attributeName != 'open') {
+                    continue;
+                }
+                if (!el.open) {
+                    open.set(false);
+                }
                 // open.set(el.open);
             }
         });
@@ -83,10 +92,15 @@ const Modal = memo(({
     }, [open, ref]);
 
     useEffect(() => {
-        if (!ref.current) return;
+        if (!ref.current) {
+            return;
+        }
 
-        if (open) ref.current.showModal();
-        else ref.current.close();
+        if (open) {
+            ref.current.showModal();
+        } else {
+            ref.current.close();
+        }
     }, [open.get(), ref]);
 
     return (

@@ -31,8 +31,10 @@ export function useAsync<V>(initialPromise?: Promise<V>): [
             resolved,
             value: value!,
         }, setPromise];
-    } else {return [{
+    } else {
+        return [{
             resolved,
             value: undefined,
-        }, setPromise];}
+        }, setPromise];
+    }
 }
