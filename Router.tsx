@@ -26,30 +26,35 @@ const None: View = () => h(Fragment, {} as any);
 
 export function createRouter<R extends RouteTable<string, View<any>>>(
     routeTable: R,
-    initial: keyof R,
+    initial: keyof R | (keyof R)[],
     fallback?: R extends RouteTable<string, infer V> ? V : never,
 ) {
+    const initialRoute = typeof initial == 'string' ?
+        [initial] :
+        (initial as (keyof R)[]);
+    const initialView = routeTable[initialRoute.at(-1) ?? ''] as View<unknown>;
+
     const store = createStore({
-        context: { route: [initial], view: routeTable[initial] ?? fallback ?? None },
+        context: {
+            route: initialRoute,
+            view: initialView ?? fallback ?? None,
+        },
         on: {
             setRoute: (_, event: { route: keyof R }) => ({
                 route: [event.route],
                 view: routeTable[event.route] ?? fallback ?? None,
             }),
-            addBreadcrumb: (
-                { route },
-                event: { route: keyof R },
-            ) => ({
+
+            addBreadcrumb: ({ route }, event: { route: keyof R }) => ({
                 route: [...route, event.route],
                 view: routeTable[event.route] ?? fallback ?? None,
             }),
-            followBreadcrumb: (
-                { route },
-                event: { route: keyof R },
-            ) => ({
+
+            followBreadcrumb: ({ route }, event: { route: keyof R }) => ({
                 route: route.slice(0, route.indexOf(event.route) + 1),
                 view: routeTable[event.route] ?? fallback ?? None,
             }),
+
             popBreadcrumb: ({ route }) => ({
                 route: route.slice(0, -1),
                 view: routeTable[route.at(-2)!] ?? fallback ?? None,
