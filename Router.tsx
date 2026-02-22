@@ -1,7 +1,7 @@
 import { createStore } from '@xstate/store';
-import { useSelector, useStore } from '@xstate/store-react';
-import { Attributes, ComponentChild, Fragment, h } from 'preact';
-import { useCallback, useMemo } from 'preact/hooks';
+import { useSelector } from '@xstate/store-react';
+import { ComponentChild, Fragment, h } from 'preact';
+import { useCallback } from 'preact/hooks';
 import { memo } from 'preact/compat';
 import { Lumber } from '@/lib/log/Lumber';
 
@@ -30,7 +30,7 @@ const None: View = () => h(Fragment, {} as any);
 export function createRouter<R extends RouteTable<string, View<any>>>(
     routeTable: R,
     initial: keyof R | (keyof R)[],
-    fallback?: R extends RouteTable<string, infer V> ? V : never,
+    fallback?: R[keyof R],
 ) {
     const initialRoute = typeof initial == 'string' ?
         [initial] :
@@ -40,7 +40,7 @@ export function createRouter<R extends RouteTable<string, View<any>>>(
     const store = createStore({
         context: {
             route: initialRoute,
-            view: initialView ?? fallback ?? None,
+            view: (initialView ?? fallback ?? None) as R[keyof R],
         },
         on: {
             setRoute: (_, event: { route: keyof R }) => ({

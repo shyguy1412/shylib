@@ -24,6 +24,11 @@ export interface Modal<T, P extends object = {}> {
     ): ComponentChild;
 }
 
+//just a helper for type inference
+export function createModal<T, P extends object = {}>(modal: Modal<T, P>) {
+    return memo(modal);
+}
+
 export function useModal<T, P extends object = {}>(Content: Modal<T, P>) {
     const openAtom = useMemo(() => createAtom<P | null>(null), []);
     const [open, setOpen] = useAtom(openAtom);
