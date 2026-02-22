@@ -14,10 +14,13 @@ export type Router<R extends string = string, V extends View<any> = View<any>> =
 
 export type RouteTable<
     R extends string = string,
-    V extends View<any> = View,
+    V extends View<any> = View<any>,
 > = {
     [route in R]: V;
 };
+
+export type Route<R extends Router> = R extends Router<infer Routes, any> ? Routes :
+    never;
 
 const None: View = () => h(Fragment, {} as any);
 
