@@ -2,7 +2,7 @@ import style from './Menu.module.css';
 import { ComponentChildren, h } from 'preact';
 import { memo, useMemo } from 'preact/compat';
 import { Lumber } from '@/lib/log/Lumber';
-import { Router, useRouter } from '@/lib/Router';
+import { Router, useRoute, useRouter } from '@/lib/Router';
 import { MdKeyboardDoubleArrowLeft } from 'react-icons/md';
 
 namespace Menu {
@@ -22,7 +22,8 @@ export const Menu = memo(function <R extends string>({
 }: Menu.Props<R>) {
     Lumber.log(Lumber.RENDER, 'MENU RENDER');
 
-    const { addBreadcrumb, breadcrumbs, popBreadcrumb } = useRouter(router);
+    const { addBreadcrumb, popBreadcrumb } = useRouter(router);
+    const breadcrumbs = useRoute(router);
 
     const entrieElements = useMemo(
         () =>

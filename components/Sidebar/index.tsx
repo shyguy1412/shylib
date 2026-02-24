@@ -1,7 +1,14 @@
 import { h } from 'preact';
 import style from './Sidebar.module.css';
 import { useCallback, useMemo } from 'preact/hooks';
-import { createRouter, Router, RouteTable, useRouter } from '@/lib/Router';
+import {
+    createRouter,
+    Router,
+    RouteTable,
+    useRoute,
+    useRouter,
+    useView,
+} from '@/lib/Router';
 import { IconType } from 'react-icons';
 import { memo, PropsWithChildren, TargetedEvent } from 'preact/compat';
 import { Lumber } from '@/lib/log/Lumber';
@@ -31,7 +38,9 @@ export const Sidebar = memo(({ menus, onWidthChange, ...props }: Props) => {
         return createRouter(routes, menus[0]?.[0]?.name ?? '@None');
     }, [menus]);
 
-    const { View, route } = useRouter(Router);
+    // const { View, route } = useRouter(Router);
+    const View = useView(Router);
+    const route = useRoute(Router).at(-1)!;
 
     const [width, setWidth] = useControlledState(
         (w) => w ?? 50,
@@ -87,7 +96,8 @@ type MenuItemProps = {
 const MenuItem = memo(({ menu, router }: MenuItemProps) => {
     Lumber.log(Lumber.RENDER, 'MENU ITEM RENDER: ' + menu.name);
 
-    const { route, setRoute } = useRouter(router);
+    const { setRoute } = useRouter(router);
+    const route = useRoute(router).at(-1)!;
 
     return (
         <div
