@@ -72,6 +72,20 @@ export const Result = class<T, E> {
         );
     }
 
+    unwrapOr(or: T): T {
+        if (this.isError()) {
+            return or;
+        }
+
+        if (this.isOk()) {
+            return this.value;
+        }
+
+        throw new Error(
+            'Result: Invariance Broken, is neither Err nor Ok variant',
+        );
+    }
+
     static async fromPromise<T>(promise: Promise<T>): Promise<Result<T, any>> {
         return await promise.then(Result.Ok).catch(Result.Err) as Result<
             T,
